@@ -1,0 +1,273 @@
+PART A – ANALYSIS
+
+1. Introduction
+
+• Purpose of the document  
+Explain why this document exists (to analyse the problem and propose a solution).
+
+• Client scenario  
+Summarise the client’s needs and context.
+
+• Objectives of the analysis  
+State what you aim to achieve (e.g., identify requirements, propose a compliant and scalable solution).
+
+
+2. Analysis of Existing Solutions
+
+• Definition  
+Reviewing current market solutions helps identify best practices and gaps.
+
+• What to include
+
+Strengths  
+Features that work well in existing platforms.
+
+Weaknesses  
+Limitations or missing features.
+
+Opportunities  
+Features you can adopt or improve.
+
+Justify the need for your solution  
+Explain why a new solution is necessary (e.g., compliance gaps, lack of accessibility, poor personalisation).
+
+
+3. Emerging Technologies
+
+• Definition  
+New or evolving technologies that can improve performance, user experience, or scalability.
+
+• Examples
+
+AI (Artificial Intelligence)  
+For personalised recommendations.
+
+IoT (Internet of Things)  
+Integration with smart devices.
+
+AR/VR (Augmented / Virtual Reality)  
+Immersive learning experiences.
+
+Cloud Computing  
+Scalability and cost efficiency.
+
+• Explain how you will incorporate them  
+Show practical integration (e.g., AI for adaptive learning paths).
+
+
+4. Business Context
+
+• Definition  
+The environment in which the client operates, including goals, constraints, and stakeholders.
+
+• Include
+
+Client overview  
+Who they are and what they do.
+
+Goals  
+What they want to achieve (e.g., increase engagement, improve accessibility).
+
+Target audience  
+Learners, tutors, guardians.
+
+Constraints  
+Budget, timeline, compliance requirements.
+
+
+5. Requirements Analysis
+
+5.1 Functional Requirements
+
+• Definition  
+Features the system must have (e.g., login, content delivery, progress tracking).
+
+
+5.2 Non-Functional Requirements
+
+• Definition  
+Quality attributes like performance, security, usability, and scalability.
+
+
+5.3 KPIs (Key Performance Indicators)
+
+• Definition  
+Measurable targets to assess success (e.g., response time < 2s, 99.9% uptime).
+
+
+5.4 MoSCoW Prioritisation
+
+• Definition  
+A method to prioritise requirements.
+
+Must have  
+Essential features.
+
+Should have  
+Important but not critical.
+
+Could have  
+Nice to include if time allows.
+
+Won’t have  
+Out of scope for now.
+
+
+6. Problem Decomposition
+
+• Definition  
+Breaking the system into smaller, manageable components (e.g., Authentication, Content Management, Payment).
+
+• Include  
+A system architecture diagram to show how components interact.
+
+
+7. Proposed Solution Overview
+
+• Definition  
+A high-level description of the solution.
+
+• Include
+
+Tech stack  
+Programming languages, frameworks, and tools.
+
+Hosting  
+Cloud or on-premises.
+
+Security measures  
+Encryption, authentication, secure coding.
+
+Integration of emerging technologies  
+Explain where AI, IoT, etc. fit in.
+
+
+8. Legal and Regulatory Compliance
+
+• Definition  
+Laws and standards that must be followed.
+
+• Examples
+
+GDPR  
+Data protection and privacy.
+
+Equality Act  
+Accessibility for all users.
+
+Consumer Rights Act  
+Fair terms for digital services.
+
+Copyright and Licensing  
+Respect intellectual property.
+
+• Include  
+A compliance mapping table  
+(law → requirement → how addressed).
+
+
+9. Professional and Ethical Standards
+
+• Definition  
+Principles guiding responsible development.
+
+BCS Code of Conduct  
+(public interest, integrity, competence, privacy).
+
+
+10. Justification of Design Choices (High-Level)
+
+• Definition  
+Explain why chosen technologies and approaches are the best fit  
+Flask for rapid development
+
+
+11. Risk Assessment & Mitigation
+
+• Definition  
+Identify potential risks, their impact, and how you will reduce them.
+
+• Include  
+A table with:  
+Risk | Impact | Likelihood | Mitigation
+
+
+PART B – DESIGN (Solution Planning and Documentation)
+
+12. Interface Design
+
+• Definition  
+Visual representation of the user interface.
+
+• Include
+
+Wireframes  
+
+Navigation flow diagram  
+
+• Justify UI/UX choices
+
+Colour scheme  
+Must meet WCAG 2.1 contrast standards.
+
+Typography  
+Readable fonts and sizes.
+
+Layout  
+Responsive for different devices.
+
+
+13. Data Design
+
+• Definition  
+How data is structured and stored.
+
+ERD (Entity Relationship Diagram)  
+Shows entities and relationships.
+
+Data dictionary  
+Defines attributes and data types.
+
+
+14. Algorithm Design
+
+• Definition  
+Logical steps to solve key problems.
+
+Registration with password hashing
+
+Login authentication
+
+CRUD operations
+
+Payment processing
+
+Feedback submission
+
+
+15. Test Strategy
+
+• Definition  
+Plan for verifying the solution works as intended.
+
+Unit tests  
+For individual components.
+
+Integration tests  
+For combined modules.
+
+User Acceptance Testing (UAT)  
+Against KPIs.
+
+Sample test cases  
+With expected results.
+
+
+Diagrams  
+Wireframes, ERD, flowcharts.
+Legal compliance mapping table  
+
+Professional body compliance statement  
+BCS principles.
+Justification for UI/UX choices  
+Colour, layout, accessibility.
