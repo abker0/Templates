@@ -1,0 +1,55 @@
+[START]
+  ->
+[Get user_id from session]
+  ->
+{Is session valid and user_id present?}
+  -> No -> [Show error: not authenticated] -> [END]
+  -> Yes ->
+[Check user admin privileges for the store]
+  ->
+{User is store admin?}
+  -> No -> [Show error: unauthorized] -> [END]
+  -> Yes ->
+[Fetch all products for the store]
+  ->
+[Display product list]
+  ->
+[Admin selects product_id]
+  ->
+{Does selected product exist in this store?}
+  -> No -> [Show error: product not found] -> [END or return to product list]
+  -> Yes ->
+[Fetch current_stock for product_id]
+  ->
+[Display current_stock]
+  ->
+[Ask admin: INCREASE stock or DECREASE stock]
+  ->
+[Get quantity (positive integer)]
+  ->
+{Is quantity a valid positive integer?}
+  -> No -> [Show error: invalid quantity] -> [END or re-prompt]
+  -> Yes ->
+{Operation = INCREASE?}
+  -> Yes ->
+      [new_stock = current_stock + quantity]
+        ->
+      [Update product stock in DB to new_stock]
+        ->
+      [Insert audit log in DB with:
+       user_id, product_id, operation=INCREASE, quantity, old_stock=current_stock, new_stock, timestamp]
+        ->
+      [Show success] -> [END]
+
+  -> No (Operation = DECREASE) ->
+      {Would new_stock be negative? (current_stock - quantity < 0)}
+        -> Yes -> [Disallow: cannot reduce below 0; show error] -> [END or re-prompt]
+        -> No ->
+            [new_stock = current_stock - quantity]
+              ->
+            [Update product stock in DB to new_stock]
+              ->
+            [Insert audit log in DB with:
+             user_id, product_id, operation=DECREASE, quantity, old_stock=current_stock, new_stock, timestamp]
+              ->
+            [Show success] -> [END]
