@@ -1,0 +1,146 @@
+ALGORITHM 1: PRODUCT ADD
+
+[START]
+  ->
+[Check user session]
+  ->
+{Session valid / user logged in?}
+  -> No -> [Show error: not authenticated] -> [END]
+  -> Yes ->
+[Get user_id from session]
+  ->
+[Check user has admin privileges for this store]
+  ->
+{User is store admin?}
+  -> No -> [Show error: unauthorized] -> [END]
+  -> Yes ->
+[Prompt admin for product fields: name, description, price_pence, initial_quantity, category, image_file]
+  ->
+{All required fields provided?}
+  -> No -> [Show error: missing fields] -> [END or re-prompt]
+  -> Yes ->
+{price_pence is valid integer >= 0?}
+  -> No -> [Show error: invalid price] -> [END or re-prompt]
+  -> Yes ->
+{initial_quantity is valid integer >= 0?}
+  -> No -> [Show error: invalid quantity] -> [END or re-prompt]
+  -> Yes ->
+{image_file provided?}
+  -> No -> [Show error: image required] -> [END or re-prompt]
+  -> Yes ->
+{image_file size < 200MB?}
+  -> No -> [Show error: image too large] -> [END or re-prompt]
+  -> Yes ->
+[Compress image for storage]
+  ->
+[Save compressed image to server disk]
+  ->
+[Generate image_url/path for stored file]
+  ->
+[Insert product into DB with: store_id, name, description, price_pence, stock=initial_quantity, category, image_url]
+  ->
+[Insert audit log record in DB with:
+ user_id, store_id, action=PRODUCT_ADD, product_id, details, timestamp]
+  ->
+[Show success: product added]
+  ->
+[END]
+
+
+ALGORITHM 2: PRODUCT DELETE
+
+[START]
+  ->
+[Check user session]
+  ->
+{Session valid / user logged in?}
+  -> No -> [Show error: not authenticated] -> [END]
+  -> Yes ->
+[Get user_id from session]
+  ->
+[Check user has admin privileges for this store]
+  ->
+{User is store admin?}
+  -> No -> [Show error: unauthorized] -> [END]
+  -> Yes ->
+[Fetch all products for store from DB]
+  ->
+[Display product list]
+  ->
+[Admin selects product_id to delete]
+  ->
+{Does selected product exist in this store?}
+  -> No -> [Show error: product not found] -> [END or back to list]
+  -> Yes ->
+[Display selected product details]
+  ->
+{Confirm delete? (first confirmation)}
+  -> No -> [Cancel delete] -> [END]
+  -> Yes ->
+{Confirm delete again? (double confirmation)}
+  -> No -> [Cancel delete] -> [END]
+  -> Yes ->
+[Delete product from DB]
+  ->
+[Insert audit log record in DB with:
+ user_id, store_id, action=PRODUCT_DELETE, product_id, details, timestamp]
+  ->
+[Show success: product deleted]
+  ->
+[END]
+
+
+ALGORITHM 3: PRODUCT UPDATE (EDIT)
+
+[START]
+  ->
+[Check user session]
+  ->
+{Session valid / user logged in?}
+  -> No -> [Show error: not authenticated] -> [END]
+  -> Yes ->
+[Get user_id from session]
+  ->
+[Check user has admin privileges for this store]
+  ->
+{User is store admin?}
+  -> No -> [Show error: unauthorized] -> [END]
+  -> Yes ->
+[Fetch all products for store from DB]
+  ->
+[Display product list]
+  ->
+[Admin selects product_id to edit]
+  ->
+{Does selected product exist in this store?}
+  -> No -> [Show error: product not found] -> [END or back to list]
+  -> Yes ->
+[Load current product details from DB]
+  ->
+[Display current details in editable form]
+  ->
+[Admin submits changes (any of: name, description, price_pence, category, image_file(optional))]
+  ->
+{Any changes provided?}
+  -> No -> [No changes; exit] -> [END]
+  -> Yes ->
+{If price changed: price_pence is valid integer >= 0?}
+  -> No -> [Show error: invalid price] -> [END or re-edit]
+  -> Yes ->
+{If image updated: image_file size < 200MB?}
+  -> No -> [Show error: image too large] -> [END or re-edit]
+  -> Yes ->
+[If image updated: compress image]
+  ->
+[If image updated: save compressed image to server disk]
+  ->
+[If image updated: generate new image_url/path]
+  ->
+[Update product record in DB with changed fields (and image_url if updated)]
+  ->
+[Insert audit log record in DB with:
+ user_id, store_id, action=PRODUCT_UPDATE, product_id, details_of_changes, timestamp]
+  ->
+[Show success: product updated]
+  ->
+[END]
