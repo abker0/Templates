@@ -1,0 +1,163 @@
+[START]
+  ->
+[Check user session]
+  ->
+{Is user logged in?}
+  -> No -> [Redirect to login / show error] -> [END]
+  -> Yes ->
+[Get user_id from session]
+  ->
+[Load user's current cart from DB]
+  ->
+[Get filters form inputs]
+  ->
+[Get search bar text]
+  ->
+{No filters AND no search text?}
+  -> Yes -> [Query DB: all available products] -> [Display products]
+  -> No  -> [Query DB: filtered/searched available products] -> [Display products]
+
+(SHOPPING LOOP)
+  ->
+[User selects product_id and quantity to add/update in cart]
+  ->
+{Product exists and is available?}
+  -> No -> [Show error: product not available] -> [Back to products] -> (SHOPPING LOOP)
+  -> Yes ->
+[Fetch available_stock for product_id]
+  ->
+{Quantity is positive integer?}
+  -> No -> [Show error: invalid quantity] -> [Back to products] -> (SHOPPING LOOP)
+  -> Yes ->
+{Quantity <= available_stock?}
+  -> No -> [Show error: insufficient stock] -> [Back to products] -> (SHOPPING LOOP)
+  -> Yes ->
+[Save cart line item in DB (upsert): user_id, product_id, quantity]
+  ->
+{Continue shopping?}
+  -> Yes -> [Back to products] -> (SHOPPING LOOP)
+  -> No  -> [Go to checkout]
+
+[CHECKOUT]
+  ->
+[Reload latest cart from DB]
+  ->
+{Cart empty?}
+  -> Yes -> [Show error: cart empty] -> [END or back to products]
+  -> No ->
+[Compute subtotal_pence from cart items]
+  ->
+[Display cart summary and subtotal]
+  ->
+[Display delivery/pickup options]
+  ->
+{User chooses DELIVERY?}
+  -> Yes ->
+      [User selects delivery date]
+        ->
+      [User selects delivery timeslot]
+        ->
+      [delivery_price_pence = compute delivery fee]
+  -> No (PICKUP) ->
+      [User selects pickup date]
+        ->
+      [delivery_price_pence = 0]
+
+[Promo codes + loyalty points]
+  ->
+[Get promo_code input (optional)]
+  ->
+{Promo code provided?}
+  -> No -> [promo_discount_pence = 0]
+  -> Yes ->
+      {Promo code valid?}
+        -> No -> [Show error invalid promo] -> [Back to checkout inputs]
+        -> Yes -> [promo_discount_pence = compute promo discount]
+
+  ->
+[Get user_points_balance from DB]
+  ->
+{User chooses to use points?}
+  -> No ->
+      [points_to_redeem = 0]
+        ->
+      [points_discount_pence = 0]
+        ->
+      [total_before_points_pence = subtotal_pence - promo_discount_pence + delivery_price_pence]
+        ->
+      [final_total_pence = total_before_points_pence]
+  -> Yes ->
+      [total_before_points_pence = subtotal_pence - promo_discount_pence + delivery_price_pence]
+        ->
+      {Is total_before_points_pence <= 0?}
+        -> Yes ->
+            [points_to_redeem = 0; points_discount_pence = 0]
+              ->
+            [final_total_pence = 0]
+        -> No ->
+            [points_discount_pence = MIN(user_points_balance, total_before_points_pence)]
+              ->
+            [points_to_redeem = points_discount_pence]
+              ->
+            [final_total_pence = total_before_points_pence - points_discount_pence]
+
+  ->
+[Display final_total_pence to user for confirmation]
+  ->
+{User confirms checkout?}
+  -> No -> [Back to checkout] -> [END or loop]
+  -> Yes ->
+
+[STRIPE PAYMENT]
+  ->
+[Create Stripe Checkout Session for final_total_pence]
+  ->
+[Redirect user to Stripe]
+  ->
+[Receive payment result]
+  ->
+{Payment successful?}
+  -> No -> [Show payment failed/cancelled; keep cart and points unchanged] -> [END]
+  -> Yes ->
+
+[CREATE ORDER + UPDATE STOCK + UPDATE POINTS]
+  ->
+[Create Order record in DB with:
+ user_id, items, subtotal_pence, promo_discount_pence, delivery_price_pence,
+ points_to_redeem, points_discount_pence, final_total_pence,
+ fulfillment_type, selected_date, selected_timeslot(if delivery),
+ stripe identifiers, status=PAID]
+
+  ->
+(FOR EACH ITEM IN ORDER)
+  ->
+[Load latest stock for product_id]
+  ->
+{Would stock go negative if deduct ordered quantity?}
+  -> Yes -> [Handle conflict: mark order for review/refund OR stop with error state] -> [END]
+  -> No  -> [Update stock: stock = stock - ordered_quantity] -> (next item)
+  ->
+(END FOR)
+
+  ->
+[Empty user's cart in DB]
+
+  ->
+[Deduct redeemed points from user account]
+  - new_points_balance = old_points_balance - points_to_redeem
+
+  ->
+[Award points for this order]
+  - points_earned = FLOOR(final_total_pence * 0.10)
+  - new_points_balance = new_points_balance + points_earned
+
+  ->
+[Update user points balance in DB to new_points_balance]
+  ->
+[Optionally write points audit/ledger entry:
+ order_id, points_to_redeem, points_earned, old_balance, new_balance, timestamp]
+
+  ->
+[Show order confirmation]
+  ->
+[END]
