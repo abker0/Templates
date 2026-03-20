@@ -1,0 +1,96 @@
+[START]
+  ->
+[Get registration form data: first_name, last_name, email, phone, password, repeat_password]
+  ->
+[Trim whitespace on first_name, last_name, email, phone]
+  ->
+{All required fields present (non-empty)?}
+  -> No -> [Show error: missing required fields] -> [END]
+  -> Yes ->
+{first_name length <= 30?}
+  -> No -> [Show error: first_name too long] -> [END]
+  -> Yes ->
+{first_name contains only letters or '-' ?}
+  -> No -> [Show error: first_name invalid characters] -> [END]
+  -> Yes ->
+{last_name length <= 30?}
+  -> No -> [Show error: last_name too long] -> [END]
+  -> Yes ->
+{last_name contains only letters or '-' ?}
+  -> No -> [Show error: last_name invalid characters] -> [END]
+  -> Yes ->
+{email length < 255?}
+  -> No -> [Show error: email too long] -> [END]
+  -> Yes ->
+{email format valid?}
+  -> No -> [Show error: invalid email] -> [END]
+  -> Yes ->
+{phone length < 20?}
+  -> No -> [Show error: phone too long] -> [END]
+  -> Yes ->
+{phone format valid (allow area code)?}
+  -> No -> [Show error: invalid phone] -> [END]
+  -> Yes ->
+{password length > 12?}
+  -> No -> [Show error: password too short] -> [END]
+  -> Yes ->
+{password has uppercase?}
+  -> No -> [Show error: needs uppercase] -> [END]
+  -> Yes ->
+{password has lowercase?}
+  -> No -> [Show error: needs lowercase] -> [END]
+  -> Yes ->
+{password has number?}
+  -> No -> [Show error: needs number] -> [END]
+  -> Yes ->
+{password has symbol?}
+  -> No -> [Show error: needs symbol] -> [END]
+  -> Yes ->
+{repeat_password matches password?}
+  -> No -> [Show error: passwords do not match] -> [END]
+  -> Yes ->
+[Call Stripe API: create customer]
+  ->
+{Stripe customer created?}
+  -> No -> [Show error: Stripe customer creation failed] -> [END]
+  -> Yes ->
+[Read stripe_customer_id from Stripe response]
+  ->
+[Compute password_hash = SHA256(password)]
+  ->
+[Insert user into DB with stripe_customer_id; set two_fa_enabled = false]
+  ->
+{User chooses to enable 2FA?}
+  -> No -> [Registration complete] -> [END]
+  -> Yes ->
+[Generate TOTP secret in memory (do not store yet)]
+  ->
+[Create provisioning URI]
+  ->
+[Generate QR code from provisioning URI]
+  ->
+[Display QR code to user]
+  ->
+[Set attempts = 0]
+  ->
+(LOOP)
+  ->
+[Prompt user for TOTP code]
+  ->
+{Entered code valid for this TOTP secret?}
+  -> Yes ->
+     [Store TOTP secret in DB]
+       ->
+     [Set two_fa_enabled = true in DB]
+       ->
+     [Registration complete] -> [END]
+  -> No ->
+     [attempts = attempts + 1]
+       ->
+     {attempts >= 3?}
+       -> Yes ->
+          [End 2FA setup; keep two_fa_enabled = false; do not store TOTP secret]
+            ->
+          [Registration complete] -> [END]
+       -> No ->
+          [Prompt user for TOTP code] -> (back to LOOP)
