@@ -1,0 +1,274 @@
+----------------------------------------------------------------------
+TABLE: USER
+Purpose: Stores customer/admin accounts, auth info, Stripe link, loyalty points.
+----------------------------------------------------------------------
+
+- user_id (INT, PK, NOT NULL)
+  Unique identifier for a user.
+
+- first_name (VARCHAR(30), NOT NULL)
+  User first name.
+
+- last_name (VARCHAR(30), NOT NULL)
+  User last name.
+
+- email (VARCHAR(255), UNIQUE, NOT NULL)
+  Email address (login/contact).
+
+- phone_number (VARCHAR(20), UNIQUE, NOT NULL)
+  Phone number (login/contact).
+
+- password_hash (LargeBinary, NOT NULL)
+  Stored password hash.
+
+- profile_picture_base64 (LargeBinary, NULL)
+  Profile picture data (named base64; stored as binary in diagram).
+
+- totp_token (LargeBinary, NULL)
+  TOTP secret/token used for 2FA (present only if 2FA enabled).
+
+- two_fa_active (BOOLEAN, NOT NULL)
+  Whether 2FA is enabled.
+
+- account_creation_timestamp (DATETIME, NOT NULL)
+  Account creation time.
+
+- last_active_timestamp (DATETIME, NOT NULL)
+  Last active time (update on login/activity).
+
+- stripe_id (STRING, NULL)
+  Stripe customer identifier / reference.
+
+- loyalty_points (INT, NOT NULL)
+  Loyalty points balance (your rules: 100 points = £1; and redeem 1 point = 1 penny).
+
+
+----------------------------------------------------------------------
+TABLE: STORE
+Purpose: Stores seller/store details and address.
+----------------------------------------------------------------------
+
+- store_id (INT, PK, NOT NULL)
+  Unique identifier for a store.
+
+- store_name (VARCHAR(128), NOT NULL)
+  Store display name.
+
+- address_line_1 (VARCHAR(255), NOT NULL)
+  Address line 1.
+
+- address_line_2 (VARCHAR(255), NULL)
+  Address line 2 (optional).
+
+- county (VARCHAR(120), NOT NULL)
+  County/region.
+
+- postcode (VARCHAR(10), NOT NULL)
+  Post/ZIP code.
+
+- store_images_directory (LargeBinary, NULL)
+  Storage reference for store images (diagram uses binary; often this is a path/URL string).
+
+
+----------------------------------------------------------------------
+TABLE: STORE_ADMINS
+Purpose: Maps which users are admins of which store(s).
+----------------------------------------------------------------------
+
+- admin_id (INT, PK, NOT NULL)
+  Unique identifier for the mapping row.
+
+- user_id (INT, FK -> USER.user_id, NOT NULL)
+  The admin user.
+
+- store_id (INT, FK -> STORE.store_id, NOT NULL)
+  The store they administer.
+
+
+----------------------------------------------------------------------
+TABLE: PRODUCT
+Purpose: Store products sold by a store, price, stock, image reference.
+----------------------------------------------------------------------
+
+- product_id (INT, PK, NOT NULL)
+  Unique product identifier.
+
+- store_id (INT, FK -> STORE.store_id, NOT NULL)
+  Store that owns this product.
+
+- product_name (VARCHAR(255), NOT NULL)
+  Product name/title.
+
+- price_pence (INT, NOT NULL)
+  Product price in pence (integer).
+
+- quantity_in_stock (INT, NOT NULL)
+  Current stock (must never go negative).
+
+- product_image_url (LargeBinary, NULL)
+  Image reference (named URL; diagram shows binary).
+
+
+----------------------------------------------------------------------
+TABLE: DELIVERY_METHOD
+Purpose: Delivery/pickup methods configured per store (with pricing + active flag).
+----------------------------------------------------------------------
+
+- delivery_method_id (INT, PK, NOT NULL)
+  Unique identifier for a delivery method.
+
+- store_id (INT, FK -> STORE.store_id, NOT NULL)
+  Store this delivery method belongs to.
+
+- name (VARCHAR(255), NOT NULL)
+  Method name (e.g., "Delivery", "Pickup").
+
+- price_pence (INT, NOT NULL)
+  Delivery/pickup fee in pence.
+
+- notes (TEXT, NULL)
+  Description/notes.
+
+- active (BOOLEAN, NOT NULL)
+  Whether this method is currently available.
+
+
+----------------------------------------------------------------------
+TABLE: ORDER
+Purpose: Order header (customer + totals + delivery window + Stripe ref).
+----------------------------------------------------------------------
+
+- order_id (INT, PK, NOT NULL)
+  Unique order identifier.
+
+- order_reference_code (VARCHAR(255), UNIQUE, NOT NULL)
+  Human-friendly reference code.
+
+- user_id (INT, FK -> USER.user_id, NOT NULL)
+  Customer who placed the order.
+
+- store_id (INT, FK -> STORE.store_id, NOT NULL)
+  Store the order belongs to.
+
+- order_total_before_delivery_pence (INT, NOT NULL)
+  Total before delivery fees (pence).
+
+- order_total_pence (INT, NOT NULL)
+  Final total charged (pence).
+
+- order_timestamp (DATETIME, NOT NULL)
+  When the order was placed.
+
+- delivery_date (DATE, NULL)
+  Delivery/pickup date (nullable).
+
+- delivery_range_start (TIME, NULL)
+  Delivery time slot start (nullable).
+
+- delivery_range_end (TIME, NULL)
+  Delivery time slot end (nullable).
+
+- stripe_transaction (STRING, NULL)
+  Stripe payment reference/session/intent ID.
+
+- status (VARCHAR(255), NOT NULL)
+  Order status (e.g., PENDING/PAID/DELIVERED/CANCELLED).
+
+
+----------------------------------------------------------------------
+TABLE: ORDERITEM
+Purpose: Order line items. Composite primary key (order_id, product_id).
+----------------------------------------------------------------------
+
+- order_id (INT, PK + FK -> ORDER.order_id, NOT NULL)
+  Which order this line item belongs to.
+
+- product_id (INT, PK + FK -> PRODUCT.product_id, NOT NULL)
+  Which product this line item refers to.
+
+- quantity_ordered (INT, NOT NULL)
+  Quantity ordered.
+
+- item_price_pence_at_order_time (INT, NOT NULL)
+  Snapshot unit price in pence at time of ordering.
+
+
+----------------------------------------------------------------------
+TABLE: SUPPORT_TICKET
+Purpose: Support tickets tied to a user, store, and optionally an order.
+----------------------------------------------------------------------
+
+- support_ticket_id (INT, PK, NOT NULL)
+  Unique support ticket identifier.
+
+- user_id (INT, FK -> USER.user_id, NOT NULL)
+  Ticket creator.
+
+- store_id (INT, FK -> STORE.store_id, NOT NULL)
+  Store the ticket relates to.
+
+- order_id (INT, FK -> ORDER.order_id, NULL)
+  Related order (optional).
+
+- support_reason (VARCHAR(255), NOT NULL)
+  Category/reason for ticket.
+
+- description (TEXT, NOT NULL)
+  Ticket details.
+
+- status (VARCHAR(50), NOT NULL)
+  Ticket status (e.g., OPEN/IN_PROGRESS/RESOLVED/CLOSED).
+
+- created_at (DATETIME, NOT NULL)
+  Created timestamp.
+
+- updated_at (DATETIME, NOT NULL)
+  Last updated timestamp.
+
+
+----------------------------------------------------------------------
+TABLE: AUDIT_LOG
+Purpose: Audit trail of important actions (especially admin operations).
+----------------------------------------------------------------------
+
+- audit_log_id (INT, PK, NOT NULL)
+  Unique audit log identifier.
+
+- user_id (INT, FK -> USER.user_id, NOT NULL)
+  Who performed the action.
+
+- store_id (INT, FK -> STORE.store_id, NULL)
+  Store context (optional depending on action).
+
+- action (VARCHAR(255), NOT NULL)
+  Action name (e.g., PRODUCT_ADD, PRODUCT_DELETE, STOCK_INCREASE, STOCK_DECREASE).
+
+- entity_type (VARCHAR(255), NOT NULL)
+  Entity type affected (e.g., PRODUCT, ORDER, DELIVERY_METHOD, SUPPORT_TICKET).
+
+- entity_id (INT, NULL)
+  The affected entity record ID (optional depending on action).
+
+- ip_address (VARCHAR(255), NULL)
+  Source IP address (optional).
+
+- created_at (DATETIME, NOT NULL)
+  When the audit event occurred.
+
+
+----------------------------------------------------------------------
+RELATIONSHIP SUMMARY
+----------------------------------------------------------------------
+
+- STORE 1 -> many PRODUCT
+- STORE 1 -> many DELIVERY_METHOD
+- USER 1 -> many ORDER
+- STORE 1 -> many ORDER
+- ORDER 1 -> many ORDERITEM
+- PRODUCT 1 -> many ORDERITEM
+- USER 1 -> many SUPPORT_TICKET
+- STORE 1 -> many SUPPORT_TICKET
+- ORDER 0/1 -> many SUPPORT_TICKET (order_id nullable)
+- USER 1 -> many AUDIT_LOG
+- STORE 0/1 -> many AUDIT_LOG (store_id optional)
+- USER many <-> many STORE via STORE_ADMINS
