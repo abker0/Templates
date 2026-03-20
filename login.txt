@@ -1,0 +1,72 @@
+LOGIN ALGORITHM (EMAIL OR PHONE + PASSWORD + OPTIONAL 2FA + LOCKOUT)
+
+[START]
+  ->
+[Get login form inputs: identifier (email_or_phone), password]
+  ->
+[Trim whitespace on identifier]
+  ->
+{identifier provided AND password provided?}
+  -> No -> [Show error: missing credentials] -> [END]
+  -> Yes ->
+[Determine identifier type (email vs phone) OR query by either]
+  ->
+[Query DB: find user where email = identifier OR phone = identifier]
+  ->
+{User found?}
+  -> No -> [Show error: user does not exist] -> [END]
+  -> Yes ->
+[Load user record from DB: user_id, password_hash, two_fa_enabled, totp_secret(if any),
+ failed_login_count, lockout_until, last_active_at]
+
+  ->
+{Is account locked? (now < lockout_until)}
+  -> Yes -> [Show error: account locked; try again after lockout_until] -> [END]
+  -> No  ->
+
+(PASSWORD CHECK WITH 3 ATTEMPTS)
+  ->
+[Hash input password using same method as stored password hashing]
+  ->
+{Does hashed input password match stored password_hash?}
+  -> No ->
+      [Increment failed_login_count in DB]
+        ->
+      {failed_login_count >= 3?}
+        -> Yes ->
+            [Set lockout_until = now + 1 hour in DB]
+              ->
+            [Show error: too many attempts; locked for 1 hour] -> [END]
+        -> No ->
+            [Show error: invalid password] -> [END]
+  -> Yes ->
+      [Reset failed_login_count to 0 in DB]
+        ->
+      [Clear lockout_until in DB (if set)]
+        ->
+      {two_fa_enabled = true?}
+        -> No ->
+            [Create user session]
+              ->
+            [Update user last_active_at = now in DB]
+              ->
+            [Login success] -> [END]
+
+        -> Yes ->
+            [Prompt user for OTP code]
+              ->
+            [Get OTP code input]
+              ->
+            [Load totp_secret from DB]
+              ->
+            [Compute expected current TOTP code from totp_secret]
+              ->
+            {Does entered OTP code match expected TOTP code?}
+              -> No ->
+                  [Show error: invalid OTP] -> [END]
+              -> Yes ->
+                  [Create user session]
+                    ->
+                  [Update user last_active_at = now in DB]
+                    ->
+                  [Login success] -> [END]
