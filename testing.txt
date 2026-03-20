@@ -1,0 +1,86 @@
+DIFFERENT TYPES OF TESTS (FOR A WEB APP WITH AUTH, SHOPPING, ADMIN)
+
+1) STATIC TESTING (NO CODE RUNNING)
+- Requirements review: check requirements/algorithms are complete and testable
+- Design review: check navigation/role flows match requirements
+- Code review: peer review for logic/security/maintainability
+- Static analysis / linting: automated checks for risky patterns, formatting, types
+
+2) UNIT TESTING (WHITE-BOX)
+- Tests small functions/components in isolation
+Examples:
+- email/phone validation
+- password rules + hashing verification logic
+- loyalty points calculations (redeem + earn)
+- stock update rules (never negative)
+- promo code discount calculations
+
+3) INTEGRATION TESTING
+- Tests multiple parts working together (API + DB + services)
+Examples:
+- add/update cart writes correct DB rows
+- checkout total uses promo + delivery + points correctly
+- Stripe session creation called with correct amount/metadata (often mocked)
+- stock decremented and order created after payment success
+- audit log entry created for admin actions
+
+4) END-TO-END (E2E) / SYSTEM TESTING
+- Tests the whole system like a real user (UI -> backend -> DB)
+Examples:
+- register -> login -> shop -> add to cart -> checkout -> pay -> order appears in My Orders
+- admin -> manage products -> update stock -> audit log exists
+
+5) FUNCTIONAL TESTING (FEATURE-BASED)
+- Confirms each feature meets functional requirements (manual or automated)
+Examples:
+- product add/edit/delete
+- delivery vs pickup selection
+- account recovery
+- 2FA login flow
+
+6) NON-FUNCTIONAL TESTING
+6a) Performance / load testing
+- response time and throughput under load
+Examples:
+- product listing under heavy traffic
+- checkout concurrency / stock updates
+
+6b) Security testing
+- authentication + authorization boundary tests
+- common vulnerability checks (SQLi, XSS, CSRF, session issues)
+Examples:
+- non-admin cannot access admin routes
+- brute force login protection (3 attempts then 1 hour lockout)
+- 2FA cannot be bypassed
+
+6c) Usability testing
+- clarity of UI, error messages, checkout steps, points usage
+
+6d) Accessibility (a11y) testing
+- keyboard-only navigation, screen reader labels, contrast, focus order
+
+6e) Compatibility testing
+- browsers/devices (Chrome, Firefox, Safari, mobile)
+- responsive layout behavior
+
+6f) Reliability / resilience testing
+- behavior when dependencies fail (Stripe down, DB errors)
+- idempotency / retry behavior for payment callbacks/webhooks
+
+7) BLACK-BOX vs WHITE-BOX vs GREY-BOX (TESTING APPROACH)
+- Black-box: test via inputs/outputs only, no code knowledge
+- White-box: test internal logic/branches with code knowledge (typical unit tests)
+- Grey-box: partial knowledge (e.g., know DB schema and APIs, not all code)
+
+8) USER ACCEPTANCE TESTING (UAT)
+- real users/stakeholders confirm the system meets business needs
+- scenario-based scripts (customer checkout with points; admin updates stock; etc.)
+- usually on staging with realistic data
+
+9) REGRESSION TESTING
+- re-run important tests after changes to ensure nothing broke
+- key areas: checkout/Stripe, loyalty points, permissions, admin flows
+
+10) SMOKE TESTING vs SANITY TESTING
+- Smoke testing: quick post-deploy checks that critical paths work at all
+- Sanity testing: focused checks for a specific change (e.g., only points redemption)
